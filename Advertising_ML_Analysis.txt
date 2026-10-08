@@ -1,0 +1,359 @@
+Advertising Dataset - Sales Prediction using Multiple Linear Regression
+
+Business Scenario
+-----------------
+The company sells a consumer product and spends money on three advertising channels:
+TV, Radio and Newspaper.
+
+The main question is simple: if we know how much money is being spent on each
+advertising channel, can we estimate the expected sales?
+
+For this analysis I used the Advertising dataset, which contains 200 observations
+and the columns TV, Radio, Newspaper and Sales. The advertising values represent
+spending in thousands, while Sales represents sales in thousands of units.
+
+Dataset: Advertising Dataset (Kaggle / ISLR Advertising dataset)
+
+
+1. Load the dataset and examine the columns
+--------------------------------------------
+
+Python code:
+
+import pandas as pd
+
+df = pd.read_csv("Advertising.csv")
+
+print(df.head())
+print(df.shape)
+print(df.columns)
+print(df.info())
+print(df.isnull().sum())
+
+
+What I found:
+- Number of rows: 200
+- Number of columns: 4
+- Columns: TV, Radio, Newspaper, Sales
+- Missing values: 0
+
+The first three columns are the inputs and Sales is the value we want to predict.
+
+
+2. Select input features and target
+-----------------------------------
+
+The input features are:
+
+X = df[["TV", "Radio", "Newspaper"]]
+
+The target variable is:
+
+y = df["Sales"]
+
+Here, X contains the advertising budget information and y contains the actual
+sales figures.
+
+
+3. Split the data into training and testing data
+------------------------------------------------
+
+I used an 80:20 split. Most of the data is used for learning and the remaining
+data is kept aside to check how well the model works on data it has not seen.
+
+Python code:
+
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.20, random_state=42
+)
+
+This gives:
+- Training data: 160 rows
+- Testing data: 40 rows
+
+
+4. Build and train the model
+----------------------------
+
+I used Multiple Linear Regression because Sales depends on three input variables.
+
+Python code:
+
+from sklearn.linear_model import LinearRegression
+
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+After training, the model learns a relationship between the three advertising
+budgets and sales.
+
+
+5. Predict sales for unseen data
+--------------------------------
+
+Python code:
+
+y_pred = model.predict(X_test)
+
+print(y_pred)
+
+These predictions are made for the 40 testing records that were not used while
+training the model.
+
+
+6. Predict sales for the given advertising budget
+--------------------------------------------------
+
+The company wants to know the expected sales for:
+
+TV = 150
+Radio = 20
+Newspaper = 30
+
+Python code:
+
+new_budget = [[150, 20, 30]]
+predicted_sales = model.predict(new_budget)
+
+print(predicted_sales)
+
+Expected prediction:
+
+Predicted Sales ≈ 13.54 thousand units
+
+So, with this combination of advertising spending, the model expects roughly
+13.5 thousand units in sales.
+
+Note: the exact value can vary slightly if a different train/test split is used.
+The value above uses random_state=42.
+
+
+7. Evaluate the prediction error
+--------------------------------
+
+I used Mean Squared Error (MSE) to measure the prediction error and R-squared
+(R²) to see how well the model explains the sales values.
+
+Python code:
+
+from sklearn.metrics import mean_squared_error, r2_score
+
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print("Mean Squared Error:", mse)
+print("R2 Score:", r2)
+
+Using the 80:20 split with random_state=42, the results are approximately:
+
+Mean Squared Error: 2.91
+R2 Score: 0.906
+
+The MSE is reasonably low, which means the predicted values are fairly close
+to the actual sales values.
+
+An R² value of about 0.906 means the model explains around 90.6% of the
+variation in sales in the test data. For a simple advertising-based model,
+this is a strong result.
+
+
+8. Interpret the model coefficients
+-----------------------------------
+
+Python code:
+
+print("Intercept:", model.intercept_)
+print("TV:", model.coef_[0])
+print("Radio:", model.coef_[1])
+print("Newspaper:", model.coef_[2])
+
+The fitted equation is approximately:
+
+Sales = 2.939 + (0.0458 × TV) + (0.1885 × Radio)
+        - (0.0010 × Newspaper)
+
+The coefficients are approximately:
+
+TV          =  0.0458
+Radio       =  0.1885
+Newspaper   = -0.0010
+
+
+What the coefficients mean:
+
+TV:
+For every additional 1 unit of TV advertising spend, the predicted Sales
+increase by about 0.0458 units, assuming the other two advertising budgets
+stay the same.
+
+Radio:
+For every additional 1 unit of Radio advertising spend, predicted Sales
+increase by about 0.1885 units, with TV and Newspaper spending unchanged.
+
+Newspaper:
+Its coefficient is very close to zero and slightly negative (-0.0010).
+This suggests that, after accounting for TV and Radio spending, newspaper
+spending has very little additional effect on sales in this model.
+
+
+9. Which advertising medium has the strongest impact?
+------------------------------------------------------
+
+Based on the size of the fitted coefficients, Radio has the strongest positive
+effect in this multiple regression model.
+
+Strongest impact: Radio
+
+Least impact: Newspaper
+
+TV also has a positive effect, but its coefficient is smaller than the Radio
+coefficient.
+
+One important point: coefficients should be interpreted while keeping the
+other variables constant. Also, comparing raw coefficient sizes is not always
+the best way to compare importance when variables are on different scales.
+For a more formal comparison, standardized coefficients could be used.
+
+
+10. Actual Sales vs Predicted Sales visualization
+--------------------------------------------------
+
+The following code creates a simple graph comparing the actual sales values
+with the values predicted by the model.
+
+Python code:
+
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(8, 5))
+plt.scatter(y_test, y_pred)
+plt.xlabel("Actual Sales")
+plt.ylabel("Predicted Sales")
+plt.title("Actual Sales vs Predicted Sales")
+plt.plot(
+    [y_test.min(), y_test.max()],
+    [y_test.min(), y_test.max()],
+    linestyle="--"
+)
+plt.show()
+
+If the model is performing well, most points should be reasonably close to
+the diagonal line. Points far away from the line represent larger prediction
+errors.
+
+
+11. Business recommendation
+----------------------------
+
+Based on this analysis, I would give more attention to Radio advertising.
+The model shows the strongest positive coefficient for Radio among the three
+channels.
+
+However, I would not completely stop newspaper advertising based only on this
+model. Before changing the actual budget, the company should also consider
+campaign costs, audience reach, customer behavior and profit generated by each
+channel.
+
+A practical recommendation is to test increasing the Radio budget while
+monitoring sales and return on advertising spend. The company can then compare
+the results with its existing TV and Newspaper campaigns.
+
+
+12. Technical improvement
+--------------------------
+
+One useful improvement would be to collect more recent advertising and sales
+data and test other regression models such as Ridge Regression, Random Forest
+or Gradient Boosting.
+
+Cross-validation can also be used instead of relying on just one train/test
+split. This gives a more reliable idea of how the model performs on different
+sets of data.
+
+Another useful step would be checking for outliers and examining whether the
+relationship between advertising spend and sales is actually linear.
+
+
+13. Complete Python program
+---------------------------
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Load dataset
+df = pd.read_csv("Advertising.csv")
+
+# Basic inspection
+print(df.head())
+print("Shape:", df.shape)
+print("Columns:", df.columns.tolist())
+print(df.isnull().sum())
+
+# Features and target
+X = df[["TV", "Radio", "Newspaper"]]
+y = df["Sales"]
+
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.20, random_state=42
+)
+
+# Create and train model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Predict test data
+y_pred = model.predict(X_test)
+
+# Evaluate
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print("\nMean Squared Error:", mse)
+print("R2 Score:", r2)
+
+# Coefficients
+print("\nIntercept:", model.intercept_)
+print("TV coefficient:", model.coef_[0])
+print("Radio coefficient:", model.coef_[1])
+print("Newspaper coefficient:", model.coef_[2])
+
+# New advertising budget
+new_budget = [[150, 20, 30]]
+prediction = model.predict(new_budget)
+
+print("\nPredicted sales for TV=150, Radio=20, Newspaper=30:")
+print(prediction[0])
+
+# Actual vs predicted plot
+plt.figure(figsize=(8, 5))
+plt.scatter(y_test, y_pred)
+plt.xlabel("Actual Sales")
+plt.ylabel("Predicted Sales")
+plt.title("Actual Sales vs Predicted Sales")
+plt.plot(
+    [y_test.min(), y_test.max()],
+    [y_test.min(), y_test.max()],
+    linestyle="--"
+)
+plt.show()
+
+
+Final conclusion
+----------------
+The analysis shows that advertising spending is strongly related to sales.
+Among the three channels, Radio has the strongest positive coefficient in the
+multiple linear regression model, while Newspaper has the weakest effect.
+
+For the requested budget of TV=150, Radio=20 and Newspaper=30, the model
+predicts approximately 13.54 thousand units of sales.
+
+The test R² is about 0.906, so the model gives a reasonably good prediction
+on unseen data. Still, the model should be treated as a guide rather than the
+only basis for changing the company's advertising budget.
